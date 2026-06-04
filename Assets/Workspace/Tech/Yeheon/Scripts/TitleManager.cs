@@ -5,7 +5,7 @@ public class TitleManager : MonoBehaviour
 {
     public void OnClickStart()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene("House");
     }
 
     public void OnClickQuit()
