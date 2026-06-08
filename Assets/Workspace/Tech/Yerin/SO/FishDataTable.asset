@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d293d3ac931286c4a987d8eda1517af2, type: 3}
+  m_Name: FishDataTable
+  m_EditorClassIdentifier: Assembly-CSharp::FishPollutionTableSO
+  fishGroups:
+  - pollutionLevel: 0
+    fishes:
+    - fishName: Minnow
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 5
+      rarity: 0
+    - fishName: Carp
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 10
+      rarity: 0
+    - fishName: Bluegill
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 20
+      rarity: 1
+    - fishName: Golden Carp
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 35
+      rarity: 2
+  - pollutionLevel: 1
+    fishes:
+    - fishName: Mudfish
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 5
+      rarity: 0
+    - fishName: Rustfin
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 10
+      rarity: 0
+    - fishName: Oilscale
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 20
+      rarity: 1
+    - fishName: Sewer Eel
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 35
+      rarity: 2
+  - pollutionLevel: 2
+    fishes:
+    - fishName: Mutant Fish
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 5
+      rarity: 0
+    - fishName: Toxic Guppy
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 10
+      rarity: 0
+    - fishName: Toxic Guppy
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 20
+      rarity: 1
+    - fishName: Radioactive Eel
+      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+      price: 35
+      rarity: 2
