@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "InputSystem_Actions",
     "maps": [
         {
@@ -986,6 +987,54 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "TrackedDeviceOrientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Fishing",
+            "id": "8bb6834f-af87-4c90-9a99-d607f9f8430b",
+            "actions": [
+                {
+                    "name": "Fishing",
+                    "type": "Button",
+                    "id": "3da9895b-b349-460e-bc3e-5606810a82ac",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "FishingConfirm",
+                    "type": "Button",
+                    "id": "6b393df4-8ece-458a-b479-70750dc1e268",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "23f145bf-0427-4f69-89c9-221f3c775f21",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Fishing",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bedd05d2-2968-442f-9db0-d121efdc7a31",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FishingConfirm",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
