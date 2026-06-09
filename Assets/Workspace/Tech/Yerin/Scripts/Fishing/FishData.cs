@@ -1,15 +1,11 @@
 ﻿using UnityEngine;
 
-[System.Serializable]
-public class FishData
+[CreateAssetMenu(fileName = "FishData", menuName = "Fishing/FishData")]
+public class FishData : ItemData
 {
-    [SerializeField] string fishName;
-    [SerializeField] Sprite fishSprite;
     [SerializeField] int price;
     [SerializeField] FishRarity rarity;
 
-    public string FishName => fishName;
-    public Sprite FishSprite => fishSprite;
     public int Price => price;
     public int Weight => GetWeight();
     public FishRarity Rarity => rarity;

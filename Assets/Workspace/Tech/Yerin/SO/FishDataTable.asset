@@ -15,55 +15,17 @@ MonoBehaviour:
   fishGroups:
   - pollutionLevel: 0
     fishes:
-    - fishName: Minnow
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 5
-      rarity: 0
-    - fishName: Carp
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 10
-      rarity: 0
-    - fishName: Bluegill
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 20
-      rarity: 1
-    - fishName: Golden Carp
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 35
-      rarity: 2
+    - {fileID: 11400000, guid: 1e07160ec99751a43acd958e7079bec9, type: 2}
+    - {fileID: 11400000, guid: 317e0816ec96ba647ba386a32857e029, type: 2}
+    - {fileID: 11400000, guid: 2234eef6a3ebe58418ef382326b63060, type: 2}
+    - {fileID: 11400000, guid: 6687bb846bb44524d91f6fb6e909c506, type: 2}
   - pollutionLevel: 1
     fishes:
-    - fishName: Mudfish
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 5
-      rarity: 0
-    - fishName: Rustfin
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 10
-      rarity: 0
-    - fishName: Oilscale
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 20
-      rarity: 1
-    - fishName: Sewer Eel
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 35
-      rarity: 2
+    - {fileID: 11400000, guid: 86aa5b3daafc9fb4e851f98734d1ac03, type: 2}
+    - {fileID: 11400000, guid: 50b895d48ebbe2040b639033ceefcb5a, type: 2}
+    - {fileID: 11400000, guid: 4d220942b5b5b7b43922cbd7467af603, type: 2}
+    - {fileID: 11400000, guid: 952878f5b474b3f488d587aadcf61c40, type: 2}
   - pollutionLevel: 2
     fishes:
-    - fishName: Mutant Fish
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 5
-      rarity: 0
-    - fishName: Toxic Guppy
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 10
-      rarity: 0
-    - fishName: Toxic Guppy
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 20
-      rarity: 1
-    - fishName: Radioactive Eel
-      fishSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-      price: 35
-      rarity: 2
+    - {fileID: 11400000, guid: b079ead8830f25f45997ab5420cf849f, type: 2}
+    - {fileID: 11400000, guid: b443697a62e8833448d88ee3ae87faf2, type: 2}
