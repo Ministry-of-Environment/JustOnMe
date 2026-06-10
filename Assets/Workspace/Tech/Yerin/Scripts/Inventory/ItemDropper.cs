@@ -13,6 +13,9 @@ public class ItemDropper : MonoBehaviour
     [Header("Fish Drop Rule")]
     [SerializeField] private GameObject foodWastePrefab;
 
+    [Header("Pollution")]
+    [SerializeField] private PollutionSystem pollutionSystem;
+
     public bool CanDropItem(ItemData itemData)
     {
         if (itemData == null)
@@ -80,6 +83,16 @@ public class ItemDropper : MonoBehaviour
 
         SpawnPrefabAroundPlayer(foodWastePrefab);
 
+        if (pollutionSystem == null)
+        {
+            pollutionSystem = FindFirstObjectByType<PollutionSystem>();
+        }
+
+        if (pollutionSystem != null)
+        {
+            pollutionSystem.AddIllegalDump();
+        }
+
         Debug.Log($"물고기를 음식물 쓰레기로 버렸습니다: {fish.ItemName}");
         return true;
     }
@@ -93,6 +106,16 @@ public class ItemDropper : MonoBehaviour
         }
 
         SpawnPrefabAroundPlayer(trash.DropPrefab);
+
+        if (pollutionSystem == null)
+        {
+            pollutionSystem = FindFirstObjectByType<PollutionSystem>();
+        }
+
+        if (pollutionSystem != null)
+        {
+            pollutionSystem.AddIllegalDump();
+        }
 
         Debug.Log($"쓰레기를 버렸습니다: {trash.ItemName}");
         return true;

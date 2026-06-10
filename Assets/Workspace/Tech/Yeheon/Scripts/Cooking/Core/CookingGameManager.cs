@@ -24,10 +24,15 @@ public class CookingGameManager : MonoBehaviour
     [Header("PlayerMove")]
     [SerializeField] private PlayerMove playerMove;
 
+    [Header("Hunger")]
+    [SerializeField] private HungerSystem hungerSystem;
+    [SerializeField, Min(0)] private int cookingSuccessHungerRecovery = 20;
+
     private bool isCooking = false;
 
     private void Start()
     {
+        BindHungerSystem();
         BindEvents();
 
         DisableAllMiniGames();
@@ -40,6 +45,12 @@ public class CookingGameManager : MonoBehaviour
 
     private void BindEvents()
     {
+        if (fireMiniGame == null || flipMiniGame == null || saltMiniGame == null || pepperMiniGame == null || cookingTimer == null)
+        {
+            Debug.LogWarning("CookingGameManager의 미니게임 또는 타이머 참조가 비어 있습니다.");
+            return;
+        }
+
         fireMiniGame.OnMiniGameSuccess += StartFlipMiniGame;
         fireMiniGame.OnMiniGameFail += FailCooking;
 
@@ -51,6 +62,16 @@ public class CookingGameManager : MonoBehaviour
         pepperMiniGame.OnMiniGameSuccess += SuccessCooking;
 
         cookingTimer.OnTimerEnd += FailCooking;
+    }
+
+    private void BindHungerSystem()
+    {
+        if (hungerSystem != null)
+        {
+            return;
+        }
+
+        hungerSystem = FindFirstObjectByType<HungerSystem>();
     }
 
     public void StartCooking()
@@ -115,6 +136,11 @@ public class CookingGameManager : MonoBehaviour
 
         successPanel.SetActive(true);
 
+        if (hungerSystem != null && cookingSuccessHungerRecovery > 0)
+        {
+            hungerSystem.ConsumeFood(cookingSuccessHungerRecovery);
+        }
+
         Invoke(nameof(EndCooking), 2f);
     }
 
@@ -135,6 +161,8 @@ public class CookingGameManager : MonoBehaviour
     {
         isCooking = false;
 
+        CancelInvoke(nameof(EndCooking));
+
         successPanel.SetActive(false);
         failPanel.SetActive(false);
 
@@ -145,9 +173,9 @@ public class CookingGameManager : MonoBehaviour
 
     private void DisableAllMiniGames()
     {
-        fireMiniGame.gameObject.SetActive(false);
-        flipMiniGame.gameObject.SetActive(false);
-        saltMiniGame.gameObject.SetActive(false);
-        pepperMiniGame.gameObject.SetActive(false);
+        if (fireMiniGame != null) fireMiniGame.gameObject.SetActive(false);
+        if (flipMiniGame != null) flipMiniGame.gameObject.SetActive(false);
+        if (saltMiniGame != null) saltMiniGame.gameObject.SetActive(false);
+        if (pepperMiniGame != null) pepperMiniGame.gameObject.SetActive(false);
     }
 }

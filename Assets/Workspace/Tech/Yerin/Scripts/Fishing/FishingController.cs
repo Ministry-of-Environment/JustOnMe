@@ -8,6 +8,7 @@ public class FishingController : MonoBehaviour
     [Header("Fish")]
     [SerializeField] private FishTable fishTable;
     [SerializeField] private PollutionLevel currentPollutionLevel = PollutionLevel.Level1;
+    [SerializeField] private PollutionSystem pollutionSystem;
 
     [Header("Mini Game")]
     [SerializeField] private FishingMiniGameUI miniGameUI;
@@ -32,6 +33,7 @@ public class FishingController : MonoBehaviour
     private void Start()
     {
         BindInventory();
+        BindPollutionSystem();
         BindInventoryUI();
 
         SetGuideText(readyGuideMessage);
@@ -111,7 +113,7 @@ public class FishingController : MonoBehaviour
     {
         if (inventoryUI == null)
         {
-            inventoryUI = FindObjectOfType<InventoryUI>();
+            inventoryUI = FindFirstObjectByType<InventoryUI>();
         }
 
         if (inventoryUI == null)
@@ -125,6 +127,16 @@ public class FishingController : MonoBehaviour
 
         inventoryUI.OnInventoryClosed += ReleasePendingFish;
         inventoryUI.OnItemDiscarded += TryAddPendingFishToInventory;
+    }
+
+    private void BindPollutionSystem()
+    {
+        if (pollutionSystem != null)
+        {
+            return;
+        }
+
+        pollutionSystem = FindFirstObjectByType<PollutionSystem>();
     }
 
     private void UnbindInventoryUI()
@@ -163,7 +175,7 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        FishData selectedFish = fishTable.GetRandomFish(currentPollutionLevel);
+        FishData selectedFish = fishTable.GetRandomFish(GetCurrentPollutionLevel());
 
         if (selectedFish == null)
         {
@@ -203,6 +215,16 @@ public class FishingController : MonoBehaviour
         }
 
         return null;
+    }
+
+    private PollutionLevel GetCurrentPollutionLevel()
+    {
+        if (pollutionSystem != null)
+        {
+            return pollutionSystem.CurrentPollutionLevel;
+        }
+
+        return currentPollutionLevel;
     }
 
     private void OnFishingSuccess(FishData fish)

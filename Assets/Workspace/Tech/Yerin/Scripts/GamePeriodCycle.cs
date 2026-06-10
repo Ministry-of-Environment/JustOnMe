@@ -9,6 +9,10 @@ public class GamePeriodCycle : MonoBehaviour
     [Header("Period Settings")]
     [SerializeField] private float phaseDuration = 10f; // 각 페이즈 지속 시간 (초)
 
+    [Header("Hunger Integration")]
+    [SerializeField] private HungerSystem hungerSystem;
+    [SerializeField, Min(0)] private int hungerDrainPerPhase = 5;
+
     private PeriodPhase currentPhase = PeriodPhase.Beginning;
     private float timer;    // 현재 페이즈에서 경과된 시간
     private int periodCount = 1;    // 현재 기간 횟수
@@ -25,6 +29,14 @@ public class GamePeriodCycle : MonoBehaviour
     public int PeriodCount => periodCount;
     public bool IsRunning => isRunning;
     public bool IsCycleEnded => isCycleEnded;
+
+    private void Awake()
+    {
+        if (hungerSystem == null)
+        {
+            hungerSystem = FindFirstObjectByType<HungerSystem>();
+        }
+    }
 
     #region Unity Events
     private void Update()
@@ -111,6 +123,7 @@ public class GamePeriodCycle : MonoBehaviour
         timer = 0f;
 
         OnPhaseChanged?.Invoke(currentPhase);
+        ApplyHungerDrain();
 
         Debug.Log($"현재 기간 단계: {currentPhase}");
     }
@@ -133,6 +146,21 @@ public class GamePeriodCycle : MonoBehaviour
         Debug.Log($"{periodCount}번째 기간 시작");
     }
     #endregion
+
+    private void ApplyHungerDrain()
+    {
+        if (hungerSystem == null)
+        {
+            return;
+        }
+
+        if (hungerDrainPerPhase <= 0)
+        {
+            return;
+        }
+
+        hungerSystem.SpendHunger(hungerDrainPerPhase);
+    }
 
     #region Stop & Resume & End Cycle
     public void StopCycle()
