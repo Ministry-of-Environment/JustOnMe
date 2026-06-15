@@ -9,6 +9,7 @@ public class SleepManager : MonoBehaviour
 
     [Header("Sleep Settings")]
     [SerializeField] private float sleepDelay = 1f;
+    [SerializeField] private string cannotSleepMessage = "현재는 잠을 잘 수 없습니다.";
 
     private bool isSleeping;
 
@@ -27,6 +28,18 @@ public class SleepManager : MonoBehaviour
     {
         if (isSleeping)
         {
+            return;
+        }
+
+        if (periodCycle == null)
+        {
+            Debug.LogError("SleepManager에 GamePeriodCycle이 연결되어 있지 않습니다.");
+            return;
+        }
+
+        if (periodCycle.CurrentPhase != PeriodPhase.ResultWait)
+        {
+            Debug.Log(cannotSleepMessage);
             return;
         }
 
