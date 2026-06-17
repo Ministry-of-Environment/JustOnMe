@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
@@ -71,11 +71,17 @@ public class DeliveryInteractable : MonoBehaviour
             return;
         }
 
-        // TODO: 경제 시스템 구현 후 차감 처리 연결
-        // if (!moneySystem.TrySpend(deliveryPrice))
-        // {
-        //     return;
-        // }
+        if (CurrencyManager.Instance == null)
+        {
+            Debug.LogError("CurrencyManager가 존재하지 않습니다.");
+            return;
+        }
+
+        if (!CurrencyManager.Instance.TrySpendMoney(deliveryPrice))
+        {
+            Debug.Log("배달 주문 실패 : 돈 부족");
+            return;
+        }
 
         bool added = inventory.TryAddItem(deliveryTrash);
 
@@ -90,7 +96,7 @@ public class DeliveryInteractable : MonoBehaviour
             hungerSystem.ConsumeFood(deliveryHungerRecovery);
         }
 
-        Debug.Log($"배달 수령 완료: {deliveryTrash.ItemName}, 가격 {deliveryPrice}는 경제 시스템 구현 후 차감 예정");
+        Debug.Log($"배달 수령 완료: {deliveryTrash.ItemName} ");
     }
 
     private void BindSystems()

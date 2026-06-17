@@ -11,15 +11,29 @@ public class SleepManager : MonoBehaviour
     [SerializeField] private float sleepDelay = 1f;
     [SerializeField] private string cannotSleepMessage = "현재는 잠을 잘 수 없습니다.";
 
+    [Header("Rent")]
+    [SerializeField] private RentSystem rentSystem;
+
     private bool isSleeping;
 
     public bool IsSleeping => isSleeping;
+
+    //월세 팝업을 띄우기 위한 이벤트
+    public UnityEvent OnRentPaymentRequired;
 
     // 잠자기 시작 이벤트
     public UnityEvent OnSleepStarted;
 
     // 다음 날 전환 완료 이벤트
     public UnityEvent OnSleepFinished;
+
+    private void Awake()
+    {
+        if (rentSystem == null)
+        {
+            rentSystem = FindFirstObjectByType<RentSystem>();
+        }
+    }
 
     /// <summary>
     /// 잠자기 시작 요청
@@ -40,6 +54,15 @@ public class SleepManager : MonoBehaviour
         if (periodCycle.CurrentPhase != PeriodPhase.ResultWait)
         {
             Debug.Log(cannotSleepMessage);
+            return;
+        }
+
+        if (rentSystem != null && rentSystem.IsRentDay())
+        {
+            Debug.Log("월세 납부 필요");
+
+            OnRentPaymentRequired?.Invoke();
+
             return;
         }
 
@@ -75,5 +98,14 @@ public class SleepManager : MonoBehaviour
         OnSleepFinished?.Invoke();
 
         isSleeping = false;
+    }
+    public void ContinueSleep()
+    {
+        if (isSleeping)
+        {
+            return;
+        }
+
+        StartCoroutine(SleepRoutine());
     }
 }

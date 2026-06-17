@@ -12,6 +12,7 @@ public class InventoryUI : MonoBehaviour
     [SerializeField] private GameObject panel;
     [SerializeField] private InvenSlotUI[] slotUIs;
     [SerializeField] private Button discardButton;
+    [SerializeField] private TMP_Text discardButtonText;
     [SerializeField] private TMP_Text selectedItemText;
     [SerializeField] private TMP_Text messageText;
 
@@ -25,7 +26,7 @@ public class InventoryUI : MonoBehaviour
 
     private Inventory inventory;
     private int selectedIndex = -1;
-
+    private InventoryMode currentMode = InventoryMode.Normal;
     public bool IsOpen => panel != null && panel.activeSelf;
 
     public event Action OnInventoryClosed;
@@ -127,10 +128,12 @@ public class InventoryUI : MonoBehaviour
             Open();
         }
     }
-
-    public void Open()
+   
+    public void Open(InventoryMode mode = InventoryMode.Normal)
     {
         BindInventoryFromManager();
+        
+        currentMode = mode;
 
         if (panel != null)
         {
@@ -140,6 +143,15 @@ public class InventoryUI : MonoBehaviour
         selectedIndex = -1;
         ClearMessage();
         Refresh();
+        currentMode = mode;
+        if (discardButtonText != null)
+        {
+            discardButtonText.text = currentMode == InventoryMode.Sell ? "Sell" : "Discard";
+        }
+    }
+    public void Open()
+    {
+        Open(InventoryMode.Normal);
     }
 
     public void Close()
@@ -174,11 +186,30 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
+        if (currentMode == InventoryMode.Sell)
+        {
+            if (selectedItem is FishData fish)
+            {
+                ShowMessage($"Sell: {fish.ItemName} / {fish.Price}");
+            }
+            else
+            {
+                ShowMessage(cannotDiscardMessage);
+            }
+            return;
+        }
+
         ShowMessage(string.Format(selectItemMessageFormat, selectedItem.ItemName));
     }
 
     private void DiscardSelectedItem()
     {
+        if (currentMode == InventoryMode.Sell)
+        {
+            SellSelectedItem();
+            return;
+        }
+
         BindInventoryFromManager();
 
         if (inventory == null)
@@ -231,6 +262,39 @@ public class InventoryUI : MonoBehaviour
 
         OnItemDiscarded?.Invoke();
     }
+    private void SellSelectedItem()
+    {
+        BindInventoryFromManager();
+
+        if (inventory == null)
+            return;
+
+        if (selectedIndex == -1)
+        {
+            ShowMessage(noSelectedItemMessage);
+            return;
+        }
+
+        ItemData item = inventory.GetItem(selectedIndex);
+
+        if (item is not FishData fish)
+        {
+            ShowMessage(cannotDiscardMessage);
+            return;
+        }
+
+        CurrencyManager.Instance.AddMoney(fish.Price);
+
+        inventory.RemoveItem(selectedIndex);
+
+        ShowMessage($"Sold {fish.ItemName} +{fish.Price}");
+
+        selectedIndex = -1;
+        Refresh();
+
+        OnItemDiscarded?.Invoke();
+    }
+
 
     public void DropSelectedItemOutsideInventory()
     {
@@ -347,5 +411,10 @@ public class InventoryUI : MonoBehaviour
         }
 
         messageText.text = "";
+    }
+    public enum InventoryMode
+    {
+        Normal,
+        Sell
     }
 }
