@@ -10,6 +10,9 @@ public class CookingGameManager : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private GameObject cookingCanvas;
+    [SerializeField] private SpriteRenderer stoveSprite;
+    [SerializeField] private Sprite stoveSpriteOnFire;
+    [SerializeField] private Sprite stoveSpriteFryingPan;
 
     [Header("Result UI")]
     [SerializeField] private GameObject successPanel;
@@ -84,6 +87,7 @@ public class CookingGameManager : MonoBehaviour
         playerMove.SetMovementEnabled(false);
 
         cookingCanvas.SetActive(true);
+        stoveSprite.sprite = stoveSpriteOnFire;
 
         timerBarRoot.SetActive(true);
 
@@ -110,6 +114,7 @@ public class CookingGameManager : MonoBehaviour
 
     private void StartSaltMiniGame()
     {
+        stoveSprite.sprite = stoveSpriteFryingPan;
         flipMiniGame.gameObject.SetActive(false);
 
         saltMiniGame.gameObject.SetActive(true);
@@ -129,6 +134,7 @@ public class CookingGameManager : MonoBehaviour
     private void SuccessCooking()
     {
         pepperMiniGame.gameObject.SetActive(false);
+        stoveSprite.sprite = null;
 
         cookingTimer.StopTimer();
 
@@ -153,6 +159,7 @@ public class CookingGameManager : MonoBehaviour
         timerBarRoot.SetActive(false);
 
         failPanel.SetActive(true);
+        stoveSprite.sprite = null;
 
         Invoke(nameof(EndCooking), 2f);
     }

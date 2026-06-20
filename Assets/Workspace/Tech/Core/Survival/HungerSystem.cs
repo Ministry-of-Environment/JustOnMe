@@ -1,14 +1,19 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 
 [DisallowMultipleComponent]
 public class HungerSystem : MonoBehaviour
 {
+    public static HungerSystem Instance { get; private set; }
+
     [Header("Hunger Settings")]
     [SerializeField, Min(1)] private int maxHunger = 100;
     [SerializeField, Range(0f, 1f)] private float startingHungerRatio = 1f;
     [SerializeField, Min(0f)] private float hungerDecayPerMinute = 5f;
+
+    [Header("Runtime Drain")]
+    [SerializeField, Min(0f)] private float hungerDecayMultiplier = 1f;
 
     [Header("Hunger State Thresholds")]
     [SerializeField, Range(0f, 1f)] private float fullThreshold = 0.8f;
@@ -17,7 +22,7 @@ public class HungerSystem : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float criticalThreshold = 0.1f;
 
     [Header("Auto Drain")]
-    [SerializeField] private bool drainAutomatically = false;
+    [SerializeField] private bool drainAutomatically = true;
     [SerializeField] private bool initializeOnAwake = true;
 
     [Header("Recovery")]
@@ -25,26 +30,39 @@ public class HungerSystem : MonoBehaviour
 
     [Header("Events")]
     public UnityEvent<int> OnHungerChanged;
+    public UnityEvent<float> OnHungerRatioChanged;
     public UnityEvent<HungerState> OnHungerStateChanged;
     public UnityEvent OnHungerDepleted;
 
     public event Action<int> HungerChanged;
+    public event Action<float> HungerRatioChanged;
     public event Action<HungerState> HungerStateChanged;
     public event Action HungerDepleted;
 
-    private int currentHunger;
+    private float currentHunger;
+    private int lastNotifiedHunger;
     private HungerState currentState = HungerState.Full;
     private bool isInitialized;
     private bool isDepleted;
-    private float pendingDrain;
 
-    public int CurrentHunger => currentHunger;
-    public float HungerRatio => maxHunger <= 0 ? 0f : (float)currentHunger / maxHunger;
+    public int CurrentHunger => Mathf.CeilToInt(currentHunger);
+    public float CurrentHungerFloat => currentHunger;
+    public float HungerRatio => maxHunger <= 0 ? 0f : currentHunger / maxHunger;
     public HungerState CurrentState => currentState;
     public bool IsDepleted => isDepleted;
+    public float HungerDecayMultiplier => hungerDecayMultiplier;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         if (initializeOnAwake)
         {
             Initialize();
@@ -58,7 +76,7 @@ public class HungerSystem : MonoBehaviour
             return;
         }
 
-        AdvanceTime(Time.deltaTime / 60f);
+        AdvanceTime(Time.deltaTime / 60f, hungerDecayMultiplier);
     }
 
     private void OnValidate()
@@ -66,6 +84,7 @@ public class HungerSystem : MonoBehaviour
         maxHunger = Mathf.Max(1, maxHunger);
         startingHungerRatio = Mathf.Clamp01(startingHungerRatio);
         hungerDecayPerMinute = Mathf.Max(0f, hungerDecayPerMinute);
+        hungerDecayMultiplier = Mathf.Max(0f, hungerDecayMultiplier);
         defaultFoodRecovery = Mathf.Max(0, defaultFoodRecovery);
 
         fullThreshold = Mathf.Clamp01(fullThreshold);
@@ -93,13 +112,29 @@ public class HungerSystem : MonoBehaviour
     {
         isInitialized = true;
         isDepleted = false;
-        pendingDrain = 0f;
 
-        int startingHunger = Mathf.RoundToInt(maxHunger * startingHungerRatio);
-        SetHungerInternal(startingHunger, true);
+        float startingHunger = maxHunger * startingHungerRatio;
+        currentHunger = Mathf.Clamp(startingHunger, 0f, maxHunger);
+
+        lastNotifiedHunger = Mathf.CeilToInt(currentHunger);
+        currentState = GetStateFromRatio(HungerRatio);
+
+        NotifyHungerValue(true);
+        NotifyHungerRatio(true);
+        NotifyHungerState(true);
+    }
+
+    public void SetHungerDecayMultiplier(float multiplier)
+    {
+        hungerDecayMultiplier = Mathf.Max(0f, multiplier);
     }
 
     public void AdvanceTime(float minutes)
+    {
+        AdvanceTime(minutes, 1f);
+    }
+
+    public void AdvanceTime(float minutes, float multiplier)
     {
         if (minutes <= 0f)
         {
@@ -113,16 +148,9 @@ public class HungerSystem : MonoBehaviour
             return;
         }
 
-        pendingDrain += minutes * hungerDecayPerMinute;
+        multiplier = Mathf.Max(0f, multiplier);
 
-        int drainAmount = Mathf.FloorToInt(pendingDrain);
-
-        if (drainAmount <= 0)
-        {
-            return;
-        }
-
-        pendingDrain -= drainAmount;
+        float drainAmount = minutes * hungerDecayPerMinute * multiplier;
         SetHungerInternal(currentHunger - drainAmount, false);
     }
 
@@ -153,7 +181,24 @@ public class HungerSystem : MonoBehaviour
         return SetHungerInternal(currentHunger - amount, false);
     }
 
+    public bool SpendHunger(float amount)
+    {
+        if (amount <= 0f)
+        {
+            return false;
+        }
+
+        EnsureInitialized();
+        return SetHungerInternal(currentHunger - amount, false);
+    }
+
     public void SetHunger(int value)
+    {
+        EnsureInitialized();
+        SetHungerInternal(value, false);
+    }
+
+    public void SetHunger(float value)
     {
         EnsureInitialized();
         SetHungerInternal(value, false);
@@ -199,12 +244,12 @@ public class HungerSystem : MonoBehaviour
         }
     }
 
-    private bool SetHungerInternal(int value, bool forceNotify)
+    private bool SetHungerInternal(float value, bool forceNotify)
     {
-        int nextHunger = Mathf.Clamp(value, 0, maxHunger);
-        HungerState nextState = GetStateFromRatio((float)nextHunger / maxHunger);
+        float nextHunger = Mathf.Clamp(value, 0f, maxHunger);
+        HungerState nextState = GetStateFromRatio(nextHunger / maxHunger);
 
-        bool valueChanged = currentHunger != nextHunger;
+        bool valueChanged = !Mathf.Approximately(currentHunger, nextHunger);
         bool stateChanged = currentState != nextState;
 
         currentHunger = nextHunger;
@@ -212,28 +257,60 @@ public class HungerSystem : MonoBehaviour
 
         if (forceNotify || valueChanged)
         {
-            OnHungerChanged?.Invoke(currentHunger);
-            HungerChanged?.Invoke(currentHunger);
+            NotifyHungerValue(forceNotify);
+            NotifyHungerRatio(forceNotify);
         }
 
         if (forceNotify || stateChanged)
         {
-            OnHungerStateChanged?.Invoke(currentState);
-            HungerStateChanged?.Invoke(currentState);
+            NotifyHungerState(forceNotify);
         }
 
-        if (currentHunger <= 0 && !isDepleted)
+        if (currentHunger <= 0f && !isDepleted)
         {
             isDepleted = true;
+
             OnHungerDepleted?.Invoke();
             HungerDepleted?.Invoke();
+
+            if (GameEndingManager.Instance != null)
+            {
+                GameEndingManager.Instance.TriggerEnding(EndingType.Starvation);
+            }
         }
-        else if (currentHunger > 0)
+        else if (currentHunger > 0f)
         {
             isDepleted = false;
         }
 
         return valueChanged || stateChanged;
+    }
+
+    private void NotifyHungerValue(bool forceNotify)
+    {
+        int roundedHunger = Mathf.CeilToInt(currentHunger);
+
+        if (!forceNotify && lastNotifiedHunger == roundedHunger)
+        {
+            return;
+        }
+
+        lastNotifiedHunger = roundedHunger;
+
+        OnHungerChanged?.Invoke(roundedHunger);
+        HungerChanged?.Invoke(roundedHunger);
+    }
+
+    private void NotifyHungerRatio(bool forceNotify)
+    {
+        OnHungerRatioChanged?.Invoke(HungerRatio);
+        HungerRatioChanged?.Invoke(HungerRatio);
+    }
+
+    private void NotifyHungerState(bool forceNotify)
+    {
+        OnHungerStateChanged?.Invoke(currentState);
+        HungerStateChanged?.Invoke(currentState);
     }
 }
 

@@ -20,11 +20,15 @@ public class FishShopNPC : MonoBehaviour
                 Debug.LogWarning("InventoryUI가 인스펙터에 할당되지 않았습니다.");
                 return;
             }
-            inventoryUI.Open(InventoryMode.Sell);
-        }
-        if (inventoryUI.IsOpen && Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            inventoryUI.Close();
+
+            if (inventoryUI.IsOpen)
+            {
+                inventoryUI.Close();
+            }
+            else
+            {
+                inventoryUI.Open(InventoryMode.Sell);
+            }
         }
     }
 

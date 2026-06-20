@@ -22,11 +22,17 @@ public class InventoryUI : MonoBehaviour
     [SerializeField] private string noSelectedItemMessage = "Select an item first.";
     [SerializeField] private string cannotDiscardMessage = "You can't discard this item here.";
     [SerializeField] private string discardFishMessage = "Released the fish.";
-    [SerializeField] private string discardTrashMessage = "Discarded trash.";
+    [SerializeField] private string discardTrashMessage = "Dropped trash.";
+    [SerializeField] private string cannotDisposeHereMessage = "You can only dispose of trash here.";
+    [SerializeField] private string disposeTrashMessageFormat = "Disposed {0}.";
+    [SerializeField] private string selectTrashForDisposeMessageFormat = "Dispose: {0}";
+    [SerializeField] private string sellFishMessageFormat = "Sell: {0} / {1}";
+    [SerializeField] private string soldFishMessageFormat = "Sold {0} +{1}";
 
     private Inventory inventory;
     private int selectedIndex = -1;
     private InventoryMode currentMode = InventoryMode.Normal;
+
     public bool IsOpen => panel != null && panel.activeSelf;
 
     public event Action OnInventoryClosed;
@@ -89,7 +95,7 @@ public class InventoryUI : MonoBehaviour
 
         if (InventoryManager.Instance == null)
         {
-            Debug.LogWarning("InventoryManager가 없습니다.");
+            Debug.LogWarning("InventoryManager does not exist.");
             return;
         }
 
@@ -97,7 +103,7 @@ public class InventoryUI : MonoBehaviour
 
         if (inventory == null)
         {
-            Debug.LogWarning("InventoryManager에 Inventory가 연결되어 있지 않습니다.");
+            Debug.LogWarning("InventoryManager has no Inventory assigned.");
             return;
         }
 
@@ -125,14 +131,19 @@ public class InventoryUI : MonoBehaviour
         }
         else
         {
-            Open();
+            Open(InventoryMode.Normal);
         }
     }
-   
-    public void Open(InventoryMode mode = InventoryMode.Normal)
+
+    public void Open()
+    {
+        Open(InventoryMode.Normal);
+    }
+
+    public void Open(InventoryMode mode)
     {
         BindInventoryFromManager();
-        
+
         currentMode = mode;
 
         if (panel != null)
@@ -143,15 +154,7 @@ public class InventoryUI : MonoBehaviour
         selectedIndex = -1;
         ClearMessage();
         Refresh();
-        currentMode = mode;
-        if (discardButtonText != null)
-        {
-            discardButtonText.text = currentMode == InventoryMode.Sell ? "Sell" : "Discard";
-        }
-    }
-    public void Open()
-    {
-        Open(InventoryMode.Normal);
+        UpdateDiscardButtonText();
     }
 
     public void Close()
@@ -188,18 +191,39 @@ public class InventoryUI : MonoBehaviour
 
         if (currentMode == InventoryMode.Sell)
         {
-            if (selectedItem is FishData fish)
-            {
-                ShowMessage($"Sell: {fish.ItemName} / {fish.Price}");
-            }
-            else
-            {
-                ShowMessage(cannotDiscardMessage);
-            }
+            ShowSellModeMessage(selectedItem);
+            return;
+        }
+
+        if (currentMode == InventoryMode.TrashYard)
+        {
+            ShowTrashYardModeMessage(selectedItem);
             return;
         }
 
         ShowMessage(string.Format(selectItemMessageFormat, selectedItem.ItemName));
+    }
+
+    private void ShowSellModeMessage(ItemData selectedItem)
+    {
+        if (selectedItem is FishData fish)
+        {
+            ShowMessage(string.Format(sellFishMessageFormat, fish.ItemName, fish.Price));
+            return;
+        }
+
+        ShowMessage(cannotDiscardMessage);
+    }
+
+    private void ShowTrashYardModeMessage(ItemData selectedItem)
+    {
+        if (selectedItem.ItemType == ItemType.Trash)
+        {
+            ShowMessage(string.Format(selectTrashForDisposeMessageFormat, selectedItem.ItemName));
+            return;
+        }
+
+        ShowMessage(cannotDisposeHereMessage);
     }
 
     private void DiscardSelectedItem()
@@ -210,17 +234,28 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
+        if (currentMode == InventoryMode.TrashYard)
+        {
+            DisposeSelectedTrash();
+            return;
+        }
+
+        DiscardSelectedItemNormalMode();
+    }
+
+    private void DiscardSelectedItemNormalMode()
+    {
         BindInventoryFromManager();
 
         if (inventory == null)
         {
-            Debug.LogWarning("Inventory가 연결되어 있지 않습니다.");
+            Debug.LogWarning("Inventory is not connected.");
             return;
         }
 
         if (itemDropper == null)
         {
-            Debug.LogWarning("ItemDropper가 연결되어 있지 않습니다.");
+            Debug.LogWarning("ItemDropper is not connected.");
             return;
         }
 
@@ -241,7 +276,7 @@ public class InventoryUI : MonoBehaviour
         if (!itemDropper.CanDropItem(selectedItem))
         {
             ShowMessage(cannotDiscardMessage);
-            Debug.Log($"{selectedItem.ItemName}은 현재 버릴 수 없습니다.");
+            Debug.Log($"{selectedItem.ItemName} cannot be discarded here.");
             return;
         }
 
@@ -262,12 +297,15 @@ public class InventoryUI : MonoBehaviour
 
         OnItemDiscarded?.Invoke();
     }
+
     private void SellSelectedItem()
     {
         BindInventoryFromManager();
 
         if (inventory == null)
+        {
             return;
+        }
 
         if (selectedIndex == -1)
         {
@@ -283,11 +321,17 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
+        if (CurrencyManager.Instance == null)
+        {
+            Debug.LogWarning("CurrencyManager does not exist.");
+            return;
+        }
+
         CurrencyManager.Instance.AddMoney(fish.Price);
 
         inventory.RemoveItem(selectedIndex);
 
-        ShowMessage($"Sold {fish.ItemName} +{fish.Price}");
+        ShowMessage(string.Format(soldFishMessageFormat, fish.ItemName, fish.Price));
 
         selectedIndex = -1;
         Refresh();
@@ -295,29 +339,86 @@ public class InventoryUI : MonoBehaviour
         OnItemDiscarded?.Invoke();
     }
 
+    private void DisposeSelectedTrash()
+    {
+        BindInventoryFromManager();
+
+        if (inventory == null)
+        {
+            return;
+        }
+
+        if (selectedIndex == -1)
+        {
+            ShowMessage(noSelectedItemMessage);
+            return;
+        }
+
+        ItemData item = inventory.GetItem(selectedIndex);
+
+        if (item == null)
+        {
+            ShowMessage(noSelectedItemMessage);
+            return;
+        }
+
+        if (item.ItemType != ItemType.Trash)
+        {
+            ShowMessage(cannotDisposeHereMessage);
+            return;
+        }
+
+        inventory.RemoveItem(selectedIndex);
+
+        ShowMessage(string.Format(disposeTrashMessageFormat, item.ItemName));
+
+        selectedIndex = -1;
+        Refresh();
+
+        OnItemDiscarded?.Invoke();
+    }
 
     public void DropSelectedItemOutsideInventory()
     {
-        // 지금은 버튼 방식이므로 이 함수는 외부에서 직접 연결하지 않아도 됨.
-        // 혹시 나중에 드래그 앤 드롭으로 인벤토리 밖에 버릴 때 재사용 가능.
         DiscardSelectedItem();
     }
 
     private void ShowDiscardMessage(ItemData itemData)
     {
-        if (itemData is FishData)
+        if (itemData == null)
+        {
+            ClearMessage();
+            return;
+        }
+
+        if (itemData.ItemType == ItemType.Fish)
         {
             ShowMessage(discardFishMessage);
             return;
         }
 
-        if (itemData is TrashData)
+        if (itemData.ItemType == ItemType.Trash)
         {
             ShowMessage(discardTrashMessage);
             return;
         }
 
         ClearMessage();
+    }
+
+    private void UpdateDiscardButtonText()
+    {
+        if (discardButtonText == null)
+        {
+            return;
+        }
+
+        discardButtonText.text = currentMode switch
+        {
+            InventoryMode.Sell => "Sell",
+            InventoryMode.TrashYard => "Dispose",
+            _ => "Discard"
+        };
     }
 
     private void Refresh()
@@ -412,9 +513,11 @@ public class InventoryUI : MonoBehaviour
 
         messageText.text = "";
     }
+
     public enum InventoryMode
     {
         Normal,
-        Sell
+        Sell,
+        TrashYard
     }
 }

@@ -6,11 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Title.unity
+    path: Assets/Workspace/Tech/Yeheon/Scenes/Title.unity
     guid: bbeda0809072db44b989025346aa7b52
   - enabled: 1
     path: Assets/Workspace/Tech/Yeheon/Scenes/House.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Workspace/Tech/Yerin/Scenes/Fishing.unity
+    guid: 402a56ed40fcc6b428db132746456e6c
+  - enabled: 1
+    path: Assets/Workspace/Tech/Yerin/Scenes/Village.unity
+    guid: b5f53583a16789c47a73de4d38515cae
   m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: 192f161158d39fc4eb2f921c1069597b, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

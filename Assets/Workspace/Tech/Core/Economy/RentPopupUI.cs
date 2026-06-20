@@ -1,7 +1,6 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class RentPopupUI : MonoBehaviour
 {
@@ -12,47 +11,96 @@ public class RentPopupUI : MonoBehaviour
     [SerializeField] private Button payButton;
 
     [Header("References")]
-    [SerializeField] private RentSystem rentSystem;
     [SerializeField] private SleepManager sleepManager;
 
     private void Start()
     {
-        panel.SetActive(false);
+        if (panel != null)
+        {
+            panel.SetActive(false);
+        }
 
-        payButton.onClick.AddListener(PayRent);
+        if (payButton != null)
+        {
+            payButton.onClick.AddListener(PayRent);
+        }
     }
 
     public void OpenPopup()
     {
-        panel.SetActive(true);
+        if (panel != null)
+        {
+            panel.SetActive(true);
+        }
 
-        rentText.text =
-            $"Rent : {rentSystem.RentAmount} G";
+        if (RentSystem.Instance != null && rentText != null)
+        {
+            rentText.text = $"Rent : {RentSystem.Instance.RentAmount} G";
+        }
 
-        moneyText.text =
-            $"Cash reserves : {CurrencyManager.Instance.CurrentMoney} G";
+        if (CurrencyManager.Instance != null && moneyText != null)
+        {
+            moneyText.text = $"Cash reserves : {CurrencyManager.Instance.CurrentMoney} G";
+        }
+    }
+
+    public void ClosePopup()
+    {
+        if (panel != null)
+        {
+            panel.SetActive(false);
+        }
     }
 
     public void PayRent()
     {
-        bool success =
-            CurrencyManager.Instance.TrySpendMoney(
-                rentSystem.RentAmount);
-
-        if (!success)
+        if (RentSystem.Instance == null)
         {
-            HandleGameOver();
+            Debug.LogWarning("RentSystem이 존재하지 않습니다.");
             return;
         }
 
-        panel.SetActive(false);
+        if (CurrencyManager.Instance == null)
+        {
+            Debug.LogWarning("CurrencyManager가 존재하지 않습니다.");
+            return;
+        }
 
-        sleepManager.ContinueSleep();
+        bool success = CurrencyManager.Instance.TrySpendMoney(
+            RentSystem.Instance.RentAmount
+        );
+
+        if (!success)
+        {
+            TriggerEvictionEnding();
+            return;
+        }
+
+        ClosePopup();
+
+        if (sleepManager != null)
+        {
+            sleepManager.ContinueSleep();
+        }
+        else
+        {
+            Debug.LogWarning("SleepManager가 할당되지 않았습니다.");
+        }
     }
-    private void HandleGameOver()
+
+    private void TriggerEvictionEnding()
     {
         Debug.Log("월세를 납부하지 못했습니다.");
 
-        SceneManager.LoadScene("Title");
+        ClosePopup();
+
+        if (GameEndingManager.Instance != null)
+        {
+            GameEndingManager.Instance.TriggerEnding(EndingType.Eviction);
+        }
+        else
+        {
+            Debug.LogWarning("GameEndingManager가 존재하지 않습니다.");
+        }
     }
 }

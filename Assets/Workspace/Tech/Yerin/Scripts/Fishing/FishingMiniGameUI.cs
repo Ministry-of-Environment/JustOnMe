@@ -15,7 +15,7 @@ public class FishingMiniGameUI : MonoBehaviour
     [SerializeField] private RectTransform progressFill;
     [SerializeField] private RectTransform fishIcon;
 
-    private FishData currentFish;
+    private ItemData currentFish;
     private FishRarityDifficulty currentDifficulty;
 
     private int currentSuccessCount;
@@ -29,8 +29,8 @@ public class FishingMiniGameUI : MonoBehaviour
 
     private bool isPlaying;
 
-    private Action<FishData> onSuccess;
-    private Action<FishData> onFail;
+    private Action<ItemData> onSuccess;
+    private Action<ItemData> onFail;
 
     private void Awake()
     {
@@ -48,10 +48,10 @@ public class FishingMiniGameUI : MonoBehaviour
     }
 
     public void StartMiniGame(
-        FishData fish,
+        ItemData fish,
         FishRarityDifficulty difficulty,
-        Action<FishData> successCallback,
-        Action<FishData> failCallback)
+        Action<ItemData> successCallback,
+        Action<ItemData> failCallback)
     {
         Debug.Log("FishingMiniGameUI.StartMiniGame 호출됨");
 

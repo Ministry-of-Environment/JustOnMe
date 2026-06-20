@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 313dd21b461980a41b9b1b64dbe17228, type: 3}
+  m_Name: GoodLife
+  m_EditorClassIdentifier: Assembly-CSharp::EndingData
+  endingType: 0
+  title: A Small Survival
+  description: 'You survived until the end.
+
+    
+
+    The city was still far from
+    perfect, but the sea slowly began to recover its color.
+
+    Your small choices
+    remained here as quiet traces of change.
+
+    
+
+    Tomorrow can still come.
+
+    For
+    now, that is enough.'
+  endingImage: {fileID: 0}

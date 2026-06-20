@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4930cdfe30883fe46b8dff78a8b36599, type: 3}
-  m_Name: FoodWaste
+  m_Name: CanTrashData
   m_EditorClassIdentifier: Assembly-CSharp::TrashData
-  itemName: FoodWaste
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  itemName: Can
+  icon: {fileID: -1455096403836856330, guid: 6c6ba3a8ac6b2ea42bcd3c07bf23bc9b, type: 3}
   itemType: 1
   dropPrefab: {fileID: 2385408331797301829, guid: 79ca9cc40ddf6a848849b126fd7c8c9e, type: 3}

@@ -2,31 +2,32 @@
 
 public class RentSystem : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private GamePeriodCycle periodCycle;
+    public static RentSystem Instance { get; private set; }
 
     [Header("Rent")]
     [SerializeField] private int rentAmount = 1000;
 
     public int RentAmount => rentAmount;
 
-    private void Start()
+    private void Awake()
     {
-        if (periodCycle == null)
+        if (Instance != null && Instance != this)
         {
-            periodCycle = FindFirstObjectByType<GamePeriodCycle>();
+            Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     public bool IsRentDay()
     {
-        if (periodCycle == null)
+        if (GamePeriodCycle.Instance == null)
         {
             return false;
         }
 
-        return periodCycle.PeriodCount % 4 == 0;
-    }
-
-   
+        return GamePeriodCycle.Instance.PeriodCount % 4 == 0;
+    }  
 }

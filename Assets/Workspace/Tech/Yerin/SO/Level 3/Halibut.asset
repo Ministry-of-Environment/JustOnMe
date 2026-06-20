@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c33acc382143204a882b7da4549a9e9, type: 3}
+  m_Name: Halibut
+  m_EditorClassIdentifier: Assembly-CSharp::FishData
+  itemName: halibut
+  icon: {fileID: 1420799790879311191, guid: 34bb99442d1be3947ad2f8540a3855d7, type: 3}
+  itemType: 0
+  price: 50
+  rarity: 1

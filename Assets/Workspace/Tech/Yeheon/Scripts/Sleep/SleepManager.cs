@@ -1,43 +1,22 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.Events;
-using System.Collections;
 
 public class SleepManager : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private GamePeriodCycle periodCycle;
-
     [Header("Sleep Settings")]
     [SerializeField] private float sleepDelay = 1f;
     [SerializeField] private string cannotSleepMessage = "현재는 잠을 잘 수 없습니다.";
 
-    [Header("Rent")]
-    [SerializeField] private RentSystem rentSystem;
+    [Header("Events")]
+    public UnityEvent OnRentPaymentRequired;
+    public UnityEvent OnSleepStarted;
+    public UnityEvent OnSleepFinished;
 
     private bool isSleeping;
 
     public bool IsSleeping => isSleeping;
 
-    //월세 팝업을 띄우기 위한 이벤트
-    public UnityEvent OnRentPaymentRequired;
-
-    // 잠자기 시작 이벤트
-    public UnityEvent OnSleepStarted;
-
-    // 다음 날 전환 완료 이벤트
-    public UnityEvent OnSleepFinished;
-
-    private void Awake()
-    {
-        if (rentSystem == null)
-        {
-            rentSystem = FindFirstObjectByType<RentSystem>();
-        }
-    }
-
-    /// <summary>
-    /// 잠자기 시작 요청
-    /// </summary>
     public void StartSleep()
     {
         if (isSleeping)
@@ -45,60 +24,33 @@ public class SleepManager : MonoBehaviour
             return;
         }
 
-        if (periodCycle == null)
+        if (GameEndingManager.Instance != null && GameEndingManager.Instance.IsEnded)
         {
-            Debug.LogError("SleepManager에 GamePeriodCycle이 연결되어 있지 않습니다.");
             return;
         }
 
-        if (periodCycle.CurrentPhase != PeriodPhase.ResultWait)
+        if (GamePeriodCycle.Instance == null)
+        {
+            Debug.LogError("GamePeriodCycle이 존재하지 않습니다.");
+            return;
+        }
+
+        if (GamePeriodCycle.Instance.CurrentPhase != PeriodPhase.ResultWait)
         {
             Debug.Log(cannotSleepMessage);
             return;
         }
 
-        if (rentSystem != null && rentSystem.IsRentDay())
+        if (RentSystem.Instance != null && RentSystem.Instance.IsRentDay())
         {
             Debug.Log("월세 납부 필요");
-
             OnRentPaymentRequired?.Invoke();
-
             return;
         }
 
-        StartCoroutine(SleepRoutine());
+        ContinueSleep();
     }
 
-    /// <summary>
-    /// 실제 잠자기 진행 루틴
-    /// </summary>
-    private IEnumerator SleepRoutine()
-    {
-        isSleeping = true;
-
-        Debug.Log("잠자기 시작");
-
-        // 잠자기 시작 이벤트
-        OnSleepStarted?.Invoke();
-
-        // 나중에:
-        // 화면 페이드 아웃
-        // 저장
-        // 정산
-        // 사운드
-        // 연출
-        // 등을 여기에 추가 가능
-
-        yield return new WaitForSeconds(sleepDelay);
-
-        // 다음 기간(다음 날) 진행
-        periodCycle.GoToNextPeriod();
-
-        // 잠자기 종료 이벤트
-        OnSleepFinished?.Invoke();
-
-        isSleeping = false;
-    }
     public void ContinueSleep()
     {
         if (isSleeping)
@@ -106,6 +58,37 @@ public class SleepManager : MonoBehaviour
             return;
         }
 
+        if (GameEndingManager.Instance != null && GameEndingManager.Instance.IsEnded)
+        {
+            return;
+        }
+
         StartCoroutine(SleepRoutine());
+    }
+
+    private IEnumerator SleepRoutine()
+    {
+        isSleeping = true;
+
+        Debug.Log("잠자기 시작");
+
+        OnSleepStarted?.Invoke();
+
+        yield return new WaitForSecondsRealtime(sleepDelay);
+
+        if (GamePeriodCycle.Instance != null)
+        {
+            GamePeriodCycle.Instance.GoToNextPeriod();
+        }
+
+        if (GameEndingManager.Instance != null && GameEndingManager.Instance.IsEnded)
+        {
+            isSleeping = false;
+            yield break;
+        }
+
+        OnSleepFinished?.Invoke();
+
+        isSleeping = false;
     }
 }

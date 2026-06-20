@@ -6,16 +6,21 @@ using UnityEngine.Events;
 /// </summary>
 public class GamePeriodCycle : MonoBehaviour
 {
+    public static GamePeriodCycle Instance { get; private set; }
+
     [Header("Period Settings")]
-    [SerializeField] private float phaseDuration = 10f; // 각 페이즈 지속 시간 (초)
+    [SerializeField] private float phaseDuration = 10f;
 
     [Header("Hunger Integration")]
     [SerializeField] private HungerSystem hungerSystem;
-    [SerializeField, Min(0)] private int hungerDrainPerPhase = 5;
+    [SerializeField] private bool drainHungerByCycle = true;
+
+    [Header("Result Wait Hunger Penalty")]
+    [SerializeField, Min(1f)] private float resultWaitHungerMultiplier = 2f;
 
     private PeriodPhase currentPhase = PeriodPhase.Beginning;
-    private float timer;    // 현재 페이즈에서 경과된 시간
-    private int periodCount = 1;    // 현재 기간 횟수
+    private float timer;
+    private int periodCount = 1;
 
     private bool isInitialized;
     private bool isRunning;
@@ -32,16 +37,28 @@ public class GamePeriodCycle : MonoBehaviour
 
     private void Awake()
     {
-        if (hungerSystem == null)
+        if (Instance != null && Instance != this)
         {
-            hungerSystem = FindFirstObjectByType<HungerSystem>();
+            Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        ResolveHungerSystem();
+        Initialize();
     }
 
-    #region Unity Events
     private void Update()
     {
-        // 결과 대기 구간에서는 타이머가 작동하지 않도록 함
+        if (!isRunning)
+        {
+            return;
+        }
+
+        ApplySmoothHungerDrain(Time.deltaTime);
+
         if (currentPhase == PeriodPhase.ResultWait)
         {
             return;
@@ -55,7 +72,6 @@ public class GamePeriodCycle : MonoBehaviour
             MoveToNextPhase();
         }
     }
-    #endregion
 
     public void Initialize()
     {
@@ -65,20 +81,27 @@ public class GamePeriodCycle : MonoBehaviour
 
         isInitialized = true;
         isRunning = false;
+        isCycleEnded = false;
 
         OnPeriodChanged?.Invoke(periodCount);
         OnPhaseChanged?.Invoke(currentPhase);
 
         Debug.Log("기간 시스템 초기화 완료");
+
+        StartCycle();
     }
 
-    #region On Cycle
     [ContextMenu("Start Cycle")]
     public void StartCycle()
     {
-        if (isInitialized == false)
+        if (!isInitialized)
         {
             Initialize();
+        }
+
+        if (isCycleEnded)
+        {
+            return;
         }
 
         isRunning = true;
@@ -86,9 +109,6 @@ public class GamePeriodCycle : MonoBehaviour
         Debug.Log("기간 진행 시작");
     }
 
-    /// <summary>
-    /// 현재 단계에 따라 다음 단계로 넘기는 메서드
-    /// </summary>
     private void MoveToNextPhase()
     {
         switch (currentPhase)
@@ -111,30 +131,26 @@ public class GamePeriodCycle : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 실제로 상태를 바꾸는 메서드
-    /// 
-    /// 상태가 바뀔 때마다 이벤트를 발생
-    /// </summary>
-    /// <param name="nextPhase">다음 페이즈</param>
     private void ChangePhase(PeriodPhase nextPhase)
     {
         currentPhase = nextPhase;
         timer = 0f;
 
         OnPhaseChanged?.Invoke(currentPhase);
-        ApplyHungerDrain();
 
         Debug.Log($"현재 기간 단계: {currentPhase}");
     }
 
-    /// <summary>
-    /// 페이즈가 ResultWait일 때, 다음 기간으로 넘어가는 메서드
-    /// </summary>
     public void GoToNextPeriod()
     {
         if (currentPhase != PeriodPhase.ResultWait)
         {
+            return;
+        }
+
+        if (GameSessionManager.Instance != null)
+        {
+            GameSessionManager.Instance.NotifyWeekFinished();
             return;
         }
 
@@ -145,24 +161,81 @@ public class GamePeriodCycle : MonoBehaviour
 
         Debug.Log($"{periodCount}번째 기간 시작");
     }
-    #endregion
 
-    private void ApplyHungerDrain()
+    public void StartNewWeek()
     {
+        if (isCycleEnded)
+        {
+            return;
+        }
+
+        if (GameSessionManager.Instance != null)
+        {
+            periodCount = GameSessionManager.Instance.CurrentWeek;
+        }
+        else
+        {
+            periodCount++;
+        }
+
+        timer = 0f;
+
+        OnPeriodChanged?.Invoke(periodCount);
+
+        ChangePhase(PeriodPhase.Beginning);
+
+        Debug.Log($"{periodCount}번째 기간 시작");
+    }
+
+    private void ApplySmoothHungerDrain(float deltaTime)
+    {
+        if (!drainHungerByCycle)
+        {
+            return;
+        }
+
+        ResolveHungerSystem();
+
         if (hungerSystem == null)
         {
             return;
         }
 
-        if (hungerDrainPerPhase <= 0)
+        if (hungerSystem.IsDepleted)
         {
             return;
         }
 
-        hungerSystem.SpendHunger(hungerDrainPerPhase);
+        float multiplier = 1f;
+
+        if (currentPhase == PeriodPhase.ResultWait)
+        {
+            multiplier *= resultWaitHungerMultiplier;
+        }
+
+        if (GameSessionManager.Instance != null)
+        {
+            multiplier *= GameSessionManager.Instance.HungerMultiplier;
+        }
+
+        hungerSystem.AdvanceTime(deltaTime / 60f, multiplier);
     }
 
-    #region Stop & Resume & End Cycle
+    private void ResolveHungerSystem()
+    {
+        if (hungerSystem != null)
+        {
+            return;
+        }
+
+        hungerSystem = HungerSystem.Instance;
+
+        if (hungerSystem == null)
+        {
+            hungerSystem = FindFirstObjectByType<HungerSystem>();
+        }
+    }
+
     public void StopCycle()
     {
         if (isCycleEnded)
@@ -175,7 +248,7 @@ public class GamePeriodCycle : MonoBehaviour
 
     public void ResumeCycle()
     {
-        if (isInitialized == false)
+        if (!isInitialized)
         {
             return;
         }
@@ -203,15 +276,13 @@ public class GamePeriodCycle : MonoBehaviour
 
         Debug.Log("게임 종료");
     }
-    #endregion
 }
 
 public enum PeriodPhase
 {
-    Beginning,   // 새벽처럼 보이는 시작 구간
-    Progress,   // 초반 구간
-    Peak,       // 정점 구간
-    Ending,     // 저녁처럼 보이는 끝 구간
-    ResultWait  // 결과 대기 구간
+    Beginning,
+    Progress,
+    Peak,
+    Ending,
+    ResultWait
 }
-

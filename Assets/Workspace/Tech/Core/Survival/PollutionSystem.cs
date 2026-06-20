@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 [DisallowMultipleComponent]
 public class PollutionSystem : MonoBehaviour
 {
+    public static PollutionSystem Instance { get; private set; }
+
     [Header("Pollution Settings")]
     [SerializeField, Min(1)] private int maxPollution = 100;
     [SerializeField, Min(0)] private int startingPollution = 0;
@@ -17,6 +19,9 @@ public class PollutionSystem : MonoBehaviour
 
     [Header("Action Values")]
     [SerializeField, Min(0)] private int illegalDumpPollution = 15;
+
+    [Header("Difficulty")]
+    [SerializeField] private bool useDifficultyMultiplier = true;
 
     [Header("Scene Exceptions")]
     [SerializeField] private List<string> noPollutionIncreaseSceneNames = new();
@@ -41,10 +46,20 @@ public class PollutionSystem : MonoBehaviour
     public int CurrentPollution => currentPollution;
     public float PollutionRatio => maxPollution <= 0 ? 0f : (float)currentPollution / maxPollution;
     public PollutionLevel CurrentPollutionLevel => currentPollutionLevel;
+    public int CurrentPollutionLevelNumber => GetPollutionLevelNumber(currentPollutionLevel);
     public bool IsMaxed => currentPollution >= maxPollution;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         if (initializeOnAwake)
         {
             Initialize();
@@ -92,7 +107,15 @@ public class PollutionSystem : MonoBehaviour
         }
 
         EnsureInitialized();
-        return SetPollutionInternal(currentPollution + amount, false);
+
+        int finalAmount = GetFinalPollutionAmount(amount);
+
+        if (finalAmount <= 0)
+        {
+            return false;
+        }
+
+        return SetPollutionInternal(currentPollution + finalAmount, false);
     }
 
     public void SetPollution(int value)
@@ -118,12 +141,40 @@ public class PollutionSystem : MonoBehaviour
         return PollutionLevel.Level3;
     }
 
+    public int GetPollutionLevelNumber(PollutionLevel pollutionLevel)
+    {
+        switch (pollutionLevel)
+        {
+            case PollutionLevel.Level1:
+                return 1;
+
+            case PollutionLevel.Level2:
+                return 2;
+
+            case PollutionLevel.Level3:
+            default:
+                return 3;
+        }
+    }
+
     private void EnsureInitialized()
     {
         if (!isInitialized)
         {
             Initialize();
         }
+    }
+
+    private int GetFinalPollutionAmount(int baseAmount)
+    {
+        float multiplier = 1f;
+
+        if (useDifficultyMultiplier && GameSessionManager.Instance != null)
+        {
+            multiplier = GameSessionManager.Instance.PollutionMultiplier;
+        }
+
+        return Mathf.RoundToInt(baseAmount * multiplier);
     }
 
     private bool IsIllegalDumpIgnoredInCurrentScene()
@@ -179,6 +230,7 @@ public class PollutionSystem : MonoBehaviour
         if (IsMaxed && !maxEventRaised)
         {
             maxEventRaised = true;
+
             OnPollutionMaxed?.Invoke();
             PollutionMaxed?.Invoke();
         }
@@ -189,4 +241,11 @@ public class PollutionSystem : MonoBehaviour
 
         return valueChanged || levelChanged;
     }
+}
+
+public enum PollutionLevel
+{
+    Level1,
+    Level2,
+    Level3
 }

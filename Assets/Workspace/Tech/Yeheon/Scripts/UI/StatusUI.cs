@@ -2,59 +2,83 @@
 using UnityEngine.UI;
 using TMPro;
 
-
 public class StatusUI : MonoBehaviour
 {
-    [Header("Systems")]
-    public HungerSystem hungerSystem;
-    public PollutionSystem pollutionSystem;
-
     [Header("UI Fill Images")]
-    public Image hungerBarFill;
-    public Image pollutionBarFill;
+    [SerializeField] private Image hungerBarFill;
+    [SerializeField] private Image pollutionBarFill;
 
     [Header("Economy UI")]
     [SerializeField] private TMP_Text moneyText;
 
+    [Header("Date UI")]
     [SerializeField] private TMP_Text dayText;
-
     [SerializeField] private TMP_Text monthText;
-
     [SerializeField] private TMP_Text rentText;
 
-    [Header("References")]
-    [SerializeField] private GamePeriodCycle periodCycle;
-    [SerializeField] private RentSystem rentSystem;
-
-    void Update()
+    private void Update()
     {
-        if (hungerSystem != null && hungerBarFill != null)
+        UpdateHungerUI();
+        UpdatePollutionUI();
+        UpdateMoneyUI();
+        UpdateDateUI();
+    }
+
+    private void UpdateHungerUI()
+    {
+        if (HungerSystem.Instance == null || hungerBarFill == null)
         {
-            hungerBarFill.fillAmount = hungerSystem.HungerRatio;
+            return;
         }
 
-        if (pollutionSystem != null && pollutionBarFill != null)
+        hungerBarFill.fillAmount = HungerSystem.Instance.HungerRatio;
+    }
+
+    private void UpdatePollutionUI()
+    {
+        if (PollutionSystem.Instance == null || pollutionBarFill == null)
         {
-            pollutionBarFill.fillAmount = pollutionSystem.PollutionRatio;
+            return;
         }
 
-        if (moneyText != null && CurrencyManager.Instance != null)
+        pollutionBarFill.fillAmount = PollutionSystem.Instance.PollutionRatio;
+    }
+
+    private void UpdateMoneyUI()
+    {
+        if (CurrencyManager.Instance == null || moneyText == null)
         {
-            moneyText.text = $"{CurrencyManager.Instance.CurrentMoney} G";
+            return;
         }
 
-        if (periodCycle != null)
-        {
-            int day = periodCycle.PeriodCount;
+        moneyText.text = $"{CurrencyManager.Instance.CurrentMoney} G";
+    }
 
+    private void UpdateDateUI()
+    {
+        if (GamePeriodCycle.Instance == null)
+        {
+            return;
+        }
+
+        int day = GamePeriodCycle.Instance.PeriodCount;
+
+        if (dayText != null)
+        {
             dayText.text = $"Day {day}";
+        }
 
-            int month = ((day - 1) / 4) + 1;
+        int month = ((day - 1) / 4) + 1;
 
+        if (monthText != null)
+        {
             monthText.text = $"Month {month}";
+        }
 
-            int remainDays = 4 - ((day - 1) % 4);
+        int remainDays = 4 - ((day - 1) % 4);
 
+        if (rentText != null)
+        {
             rentText.text = $"Rent : {remainDays} Day Left";
         }
     }

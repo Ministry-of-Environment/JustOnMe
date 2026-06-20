@@ -1,0 +1,133 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8897171900356641784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7102086607565063239}
+  - component: {fileID: 3199404799059644481}
+  - component: {fileID: 3729039314811114748}
+  - component: {fileID: 8663661735904732780}
+  - component: {fileID: 4269569352978728467}
+  m_Layer: 0
+  m_Name: Systems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7102086607565063239
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8897171900356641784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3199404799059644481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8897171900356641784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ac0c032123365d41887442089e5859f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GamePeriodCycle
+  phaseDuration: 10
+  hungerSystem: {fileID: 8663661735904732780}
+  hungerDrainPerPhase: 5
+  OnPhaseChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPeriodChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCycleEnded:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3729039314811114748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8897171900356641784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7b7f0ed1f9412a9f0d7e1d18c89b21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PollutionSystem
+  maxPollution: 100
+  startingPollution: 0
+  level1Threshold: 0.34
+  level2Threshold: 0.67
+  illegalDumpPollution: 15
+  noPollutionIncreaseSceneNames: []
+  initializeOnAwake: 1
+  OnPollutionChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPollutionLevelChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPollutionMaxed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &8663661735904732780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8897171900356641784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ed7f9c8c4f04fa6a5a84f3d9d3f2d13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HungerSystem
+  maxHunger: 100
+  startingHungerRatio: 1
+  hungerDecayPerMinute: 5
+  fullThreshold: 0.8
+  normalThreshold: 0.5
+  hungryThreshold: 0.25
+  criticalThreshold: 0.1
+  drainAutomatically: 0
+  initializeOnAwake: 1
+  defaultFoodRecovery: 25
+  OnHungerChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnHungerStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnHungerDepleted:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4269569352978728467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8897171900356641784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fa5c81f832801f40b0cf0785eda2b5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RentSystem
+  rentAmount: 300

@@ -19,6 +19,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 317e0816ec96ba647ba386a32857e029, type: 2}
     - {fileID: 11400000, guid: 2234eef6a3ebe58418ef382326b63060, type: 2}
     - {fileID: 11400000, guid: 6687bb846bb44524d91f6fb6e909c506, type: 2}
+    - {fileID: 11400000, guid: 3ffcc4df6e206554386279362d1524e4, type: 2}
+    - {fileID: 11400000, guid: e7ecc91a9a0cc894b88119e033de088f, type: 2}
+    - {fileID: 11400000, guid: 01cc4a69b607c0b469f21dbc6859bdea, type: 2}
   - pollutionLevel: 1
     fishes:
     - {fileID: 11400000, guid: 86aa5b3daafc9fb4e851f98734d1ac03, type: 2}
@@ -29,3 +32,5 @@ MonoBehaviour:
     fishes:
     - {fileID: 11400000, guid: b079ead8830f25f45997ab5420cf849f, type: 2}
     - {fileID: 11400000, guid: b443697a62e8833448d88ee3ae87faf2, type: 2}
+    - {fileID: 11400000, guid: 06d19fcace35844469e809fba8b81300, type: 2}
+    - {fileID: 11400000, guid: 3766a792e3d78b44d8823e1e194379da, type: 2}

@@ -6,9 +6,8 @@ using UnityEngine.InputSystem;
 public class FishingController : MonoBehaviour
 {
     [Header("Fish")]
-    [SerializeField] private FishTable fishTable;
+    [SerializeField] private FishingTable fishTable;
     [SerializeField] private PollutionLevel currentPollutionLevel = PollutionLevel.Level1;
-    [SerializeField] private PollutionSystem pollutionSystem;
 
     [Header("Mini Game")]
     [SerializeField] private FishingMiniGameUI miniGameUI;
@@ -17,23 +16,28 @@ public class FishingController : MonoBehaviour
     [Header("Inventory UI")]
     [SerializeField] private InventoryUI inventoryUI;
 
+    [Header("Trash Drop")]
+    [SerializeField] private GameObject trashDropPrefab;
+    [SerializeField] private float trashDropRadius = 1.2f;
+
     [Header("Guide UI")]
-    [SerializeField] private TMP_Text guideText;
-    [SerializeField] private string readyGuideMessage = "F : Try fishing";
-    [SerializeField] private string miniGameGuideMessage = "Space : Timing";
-    [SerializeField] private string fishingSuccessMessage = "성공했다!";
-    [SerializeField] private string fishAddedMessage = "물고기를 인벤토리에 넣었습니다.";
-    [SerializeField] private string inventoryFullMessage = "인벤토리가 꽉 찼습니다. I로 인벤토리를 열어 공간을 비워주세요.";
-    [SerializeField] private string fishReleasedMessage = "물고기를 놓아주었습니다.";
+    [SerializeField]private TMP_Text guideText;
+    [SerializeField]private string readyGuideMessage = "F : Try fishing";
+    [SerializeField]private string miniGameGuideMessage = "Space : Timing";
+    [SerializeField]private string fishingSuccessMessage = "Success!";
+    [SerializeField]private string fishAddedMessage = "Fish added to inventory.";
+    [SerializeField]private string trashAddedMessage = "Trash added to inventory.";
+    [SerializeField]private string inventoryFullMessage = "Inventory full. Press I to make space.";
+    [SerializeField]private string fishReleasedMessage = "Fish released.";
+    [SerializeField]private string trashDroppedMessage = "Trash dropped nearby.";
 
     private Inventory inventory;
     private bool isFishing;
-    private FishData pendingFish;
+    private ItemData pendingItem;
 
     private void Start()
     {
         BindInventory();
-        BindPollutionSystem();
         BindInventoryUI();
 
         SetGuideText(readyGuideMessage);
@@ -74,22 +78,6 @@ public class FishingController : MonoBehaviour
         miniGameUI.TryConfirm();
     }
 
-    private void OnInventory(InputValue value)
-    {
-        if (!value.isPressed)
-        {
-            return;
-        }
-
-        if (inventoryUI == null)
-        {
-            Debug.LogWarning("InventoryUI를 찾을 수 없습니다.");
-            return;
-        }
-
-        inventoryUI.Toggle();
-    }
-
     private void BindInventory()
     {
         if (InventoryManager.Instance == null)
@@ -122,21 +110,11 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        inventoryUI.OnInventoryClosed -= ReleasePendingFish;
-        inventoryUI.OnItemDiscarded -= TryAddPendingFishToInventory;
+        inventoryUI.OnInventoryClosed -= ReleasePendingItem;
+        inventoryUI.OnItemDiscarded -= TryAddPendingItemToInventory;
 
-        inventoryUI.OnInventoryClosed += ReleasePendingFish;
-        inventoryUI.OnItemDiscarded += TryAddPendingFishToInventory;
-    }
-
-    private void BindPollutionSystem()
-    {
-        if (pollutionSystem != null)
-        {
-            return;
-        }
-
-        pollutionSystem = FindFirstObjectByType<PollutionSystem>();
+        inventoryUI.OnInventoryClosed += ReleasePendingItem;
+        inventoryUI.OnItemDiscarded += TryAddPendingItemToInventory;
     }
 
     private void UnbindInventoryUI()
@@ -146,8 +124,8 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        inventoryUI.OnInventoryClosed -= ReleasePendingFish;
-        inventoryUI.OnItemDiscarded -= TryAddPendingFishToInventory;
+        inventoryUI.OnInventoryClosed -= ReleasePendingItem;
+        inventoryUI.OnItemDiscarded -= TryAddPendingItemToInventory;
     }
 
     private void TryStartFishing()
@@ -157,7 +135,7 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        if (pendingFish != null)
+        if (pendingItem != null)
         {
             SetGuideText(inventoryFullMessage);
             return;
@@ -165,7 +143,7 @@ public class FishingController : MonoBehaviour
 
         if (fishTable == null)
         {
-            Debug.LogError("FishTable이 없습니다.");
+            Debug.LogError("FishingTable이 없습니다.");
             return;
         }
 
@@ -175,33 +153,62 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        FishData selectedFish = fishTable.GetRandomFish(GetCurrentPollutionLevel());
+        ItemData selectedItem = fishTable.GetRandomFishingItem(GetCurrentPollutionLevel());
 
-        if (selectedFish == null)
+        if (selectedItem == null)
         {
-            Debug.LogWarning("현재 오염도에서 잡을 수 있는 물고기가 없습니다.");
+            Debug.LogWarning("현재 오염도에서 잡을 수 있는 아이템이 없습니다.");
             return;
         }
 
-        FishRarityDifficulty difficulty = GetDifficulty(selectedFish.Rarity);
+        FishRarityDifficulty difficulty = GetDifficultyByItem(selectedItem);
 
         if (difficulty == null)
         {
-            Debug.LogError($"{selectedFish.Rarity} 희귀도에 해당하는 난이도 데이터가 없습니다.");
+            Debug.LogError($"{selectedItem.ItemName}에 사용할 낚시 난이도가 없습니다.");
             return;
         }
 
         isFishing = true;
         SetGuideText(miniGameGuideMessage);
 
-        Debug.Log($"물고기가 걸렸습니다: {selectedFish.ItemName} / 희귀도: {selectedFish.Rarity}");
+        if (selectedItem.ItemType == ItemType.Trash)
+        {
+            Debug.Log($"쓰레기가 걸렸습니다: {selectedItem.ItemName}");
+        }
+        else if (selectedItem.ItemType == ItemType.Fish)
+        {
+            FishData selectedFish = selectedItem as FishData;
+
+            if (selectedFish != null)
+            {
+                Debug.Log($"물고기가 걸렸습니다: {selectedFish.ItemName} / 희귀도: {selectedFish.Rarity}");
+            }
+        }
 
         miniGameUI.StartMiniGame(
-            selectedFish,
+            selectedItem,
             difficulty,
             OnFishingSuccess,
             OnFishingFail
         );
+    }
+
+    private FishRarityDifficulty GetDifficultyByItem(ItemData item)
+    {
+        if (item.ItemType == ItemType.Trash)
+        {
+            return GetDifficulty(FishRarity.Uncommon);
+        }
+
+        FishData fish = item as FishData;
+
+        if (fish == null)
+        {
+            return null;
+        }
+
+        return GetDifficulty(fish.Rarity);
     }
 
     private FishRarityDifficulty GetDifficulty(FishRarity rarity)
@@ -219,19 +226,19 @@ public class FishingController : MonoBehaviour
 
     private PollutionLevel GetCurrentPollutionLevel()
     {
-        if (pollutionSystem != null)
+        if (PollutionSystem.Instance != null)
         {
-            return pollutionSystem.CurrentPollutionLevel;
+            return PollutionSystem.Instance.CurrentPollutionLevel;
         }
 
         return currentPollutionLevel;
     }
 
-    private void OnFishingSuccess(FishData fish)
+    private void OnFishingSuccess(ItemData caughtItem)
     {
         isFishing = false;
 
-        Debug.Log($"물고기 잡기 성공: {fish.ItemName}");
+        Debug.Log($"낚시 성공: {caughtItem.ItemName}");
 
         SetGuideText(fishingSuccessMessage);
 
@@ -245,33 +252,49 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        bool added = inventory.TryAddItem(fish);
+        bool added = inventory.TryAddItem(caughtItem);
 
         if (added)
         {
-            SetGuideText(fishAddedMessage);
-            Debug.Log($"인벤토리에 물고기 추가: {fish.ItemName}");
+            if (caughtItem.ItemType == ItemType.Trash)
+            {
+                SetGuideText(trashAddedMessage);
+                Debug.Log($"인벤토리에 쓰레기 추가: {caughtItem.ItemName}");
+            }
+            else
+            {
+                SetGuideText(fishAddedMessage);
+                Debug.Log($"인벤토리에 물고기 추가: {caughtItem.ItemName}");
+            }
+
             return;
         }
 
-        pendingFish = fish;
+        pendingItem = caughtItem;
 
         SetGuideText(inventoryFullMessage);
-        Debug.Log($"인벤토리가 가득 차서 물고기 임시 대기: {fish.ItemName}");
+        Debug.Log($"인벤토리가 가득 차서 임시 대기: {caughtItem.ItemName}");
     }
 
-    private void OnFishingFail(FishData fish)
+    private void OnFishingFail(ItemData caughtItem)
     {
         isFishing = false;
 
         SetGuideText(readyGuideMessage);
 
-        Debug.Log($"물고기를 놓쳤습니다: {fish.ItemName}");
+        if (caughtItem.ItemType == ItemType.Trash)
+        {
+            Debug.Log($"쓰레기를 건져 올리지 못했습니다: {caughtItem.ItemName}");
+        }
+        else
+        {
+            Debug.Log($"물고기를 놓쳤습니다: {caughtItem.ItemName}");
+        }
     }
 
-    private void TryAddPendingFishToInventory()
+    private void TryAddPendingItemToInventory()
     {
-        if (pendingFish == null)
+        if (pendingItem == null)
         {
             return;
         }
@@ -286,7 +309,7 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        bool added = inventory.TryAddItem(pendingFish);
+        bool added = inventory.TryAddItem(pendingItem);
 
         if (!added)
         {
@@ -294,23 +317,62 @@ public class FishingController : MonoBehaviour
             return;
         }
 
-        Debug.Log($"대기 중이던 물고기 인벤토리 추가: {pendingFish.ItemName}");
+        Debug.Log($"대기 중이던 아이템 인벤토리 추가: {pendingItem.ItemName}");
 
-        pendingFish = null;
-        SetGuideText(fishAddedMessage);
+        if (pendingItem.ItemType == ItemType.Trash)
+        {
+            SetGuideText(trashAddedMessage);
+        }
+        else
+        {
+            SetGuideText(fishAddedMessage);
+        }
+
+        pendingItem = null;
     }
 
-    private void ReleasePendingFish()
+    private void ReleasePendingItem()
     {
-        if (pendingFish == null)
+        if (pendingItem == null)
         {
             return;
         }
 
-        Debug.Log($"인벤토리를 닫아 물고기를 놓아줌: {pendingFish.ItemName}");
+        if (pendingItem.ItemType == ItemType.Trash)
+        {
+            SpawnTrashAroundPlayer();
+            Debug.Log($"인벤토리를 닫아 쓰레기를 주변에 버림: {pendingItem.ItemName}");
 
-        pendingFish = null;
-        SetGuideText(fishReleasedMessage);
+            pendingItem = null;
+            SetGuideText(trashDroppedMessage);
+            return;
+        }
+
+        if (pendingItem.ItemType == ItemType.Fish)
+        {
+            Debug.Log($"인벤토리를 닫아 물고기를 놓아줌: {pendingItem.ItemName}");
+
+            pendingItem = null;
+            SetGuideText(fishReleasedMessage);
+            return;
+        }
+
+        pendingItem = null;
+        SetGuideText(readyGuideMessage);
+    }
+
+    private void SpawnTrashAroundPlayer()
+    {
+        if (trashDropPrefab == null)
+        {
+            Debug.LogWarning("trashDropPrefab이 설정되어 있지 않아 쓰레기를 생성할 수 없습니다.");
+            return;
+        }
+
+        Vector2 randomOffset = Random.insideUnitCircle.normalized * trashDropRadius;
+        Vector3 spawnPosition = transform.position + new Vector3(randomOffset.x, randomOffset.y, 0f);
+
+        Instantiate(trashDropPrefab, spawnPosition, Quaternion.identity);
     }
 
     private void SetGuideText(string message)

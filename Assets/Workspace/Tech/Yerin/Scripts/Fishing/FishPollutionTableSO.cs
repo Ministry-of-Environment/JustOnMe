@@ -20,10 +20,3 @@ public class FishPollutionTableSO : ScriptableObject
         return null;
     }
 }
-
-public enum PollutionLevel
-{
-    Level1,
-    Level2,
-    Level3
-}

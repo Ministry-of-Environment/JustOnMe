@@ -13,9 +13,6 @@ public class ItemDropper : MonoBehaviour
     [Header("Fish Drop Rule")]
     [SerializeField] private GameObject foodWastePrefab;
 
-    [Header("Pollution")]
-    [SerializeField] private PollutionSystem pollutionSystem;
-
     public bool CanDropItem(ItemData itemData)
     {
         if (itemData == null)
@@ -83,14 +80,14 @@ public class ItemDropper : MonoBehaviour
 
         SpawnPrefabAroundPlayer(foodWastePrefab);
 
-        if (pollutionSystem == null)
+        if (PollutionSystem.Instance == null)
         {
-            pollutionSystem = FindFirstObjectByType<PollutionSystem>();
+            return false;
         }
 
-        if (pollutionSystem != null)
+        if (PollutionSystem.Instance != null)
         {
-            pollutionSystem.AddIllegalDump();
+            PollutionSystem.Instance.AddIllegalDump();
         }
 
         Debug.Log($"물고기를 음식물 쓰레기로 버렸습니다: {fish.ItemName}");
@@ -105,23 +102,23 @@ public class ItemDropper : MonoBehaviour
             return false;
         }
 
-        SpawnPrefabAroundPlayer(trash.DropPrefab);
+        SpawnPrefabAroundPlayer(trash.DropPrefab, trash);
 
-        if (pollutionSystem == null)
+        if (PollutionSystem.Instance == null)
         {
-            pollutionSystem = FindFirstObjectByType<PollutionSystem>();
+            return false;
         }
 
-        if (pollutionSystem != null)
+        if (PollutionSystem.Instance != null)
         {
-            pollutionSystem.AddIllegalDump();
+            PollutionSystem.Instance.AddIllegalDump();
         }
 
         Debug.Log($"쓰레기를 버렸습니다: {trash.ItemName}");
         return true;
     }
 
-    private void SpawnPrefabAroundPlayer(GameObject prefab)
+    private void SpawnPrefabAroundPlayer(GameObject prefab, TrashData trashData = null)
     {
         Vector3 origin = dropOrigin != null ? dropOrigin.position : transform.position;
         Vector2 randomOffset = Random.insideUnitCircle * dropRadius;
@@ -132,7 +129,11 @@ public class ItemDropper : MonoBehaviour
             0f
         );
 
-        Instantiate(prefab, spawnPosition, Quaternion.identity);
+        GameObject trash = Instantiate(prefab, spawnPosition, Quaternion.identity);
+        if (trashData != null)
+        {
+            trash.GetComponent<SpriteRenderer>().sprite = trashData.Icon;
+        }
     }
 
     private bool IsFishingScene()
